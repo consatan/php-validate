@@ -88,6 +88,10 @@ trait MultipleRulesTrait
             } else {
                 // 'required|string:5,10;' OR 'required|in:5,10'
                 $rules = is_array($rule[0]) ? $rule[0] : array_map('trim', explode('|', $rule[0]));
+                // each 过滤器必须放在规则的第一位
+                if ('each' === $rules[0]) {
+                    //
+                }
 
                 foreach ($rules as $aRule) {
                     yield $field => $this->parseRule($aRule, $rule);

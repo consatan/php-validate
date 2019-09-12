@@ -154,4 +154,32 @@ class FieldValidationTest extends TestCase
         $this->assertTrue($v->isOk());
         $this->assertEmpty($v->getErrors());
     }
+
+    public function testEachValidator(): void
+    {
+        $data = [
+            'employees' => [
+                [
+                    'name' => 'aaa',
+                    'manage' => false,
+                    'age' => 28,
+                ],
+                [
+                    'name' => 'bbb',
+                    'manage' => true,
+                    'age' => 32,
+                ],
+                [
+                    'name' => 'ccc',
+                    'manage' => false,
+                    'age' => 24,
+                ]
+            ],
+        ];
+
+        $v = FieldValidation::check($data, [
+            ['employees.*.age', 'each|required|int|min:18|max:35']
+        ]);
+        $this->assertTrue($v->isOk());
+    }
 }
