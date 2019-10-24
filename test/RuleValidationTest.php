@@ -546,6 +546,40 @@ class RuleValidationTest extends TestCase
         $this->assertFalse($v->isOk());
         $this->assertCount(1, $v->getErrors());
         $this->assertTrue($v->inError('users.*.name'));
+
+        $v = RuleValidation::check([
+            'users' => [
+                ['id' => 34, 'name' => 'tom'],
+                ['name' => 'john'],
+            ],
+        ], [
+            ['users.*.id', 'each', 'required'],
+            ['users.*.id', 'each', 'number', 'min' => 34],
+        ]);
+
+        $this->assertFalse($v->isOk());
+        $this->assertCount(1, $v->getErrors());
+        $this->assertTrue($v->inError('users.*.id'));
+
+        $v = RuleValidation::check([
+            'users' => [
+                ['id' => 34, 'name' => 'tom', 'todo' => [
+                    ['thing' => 'read a book', 'done' => false],
+                    ['thing' => 'play a game', 'done' => true],
+                ]],
+                ['id' => 88, 'name' => 'john', 'todo' => [
+                    ['thing' => 'one day an apple', 'done' => true],
+                    ['thing' => 'muu...'],
+                ]],
+            ]
+        ], [
+            ['users.*.todo.*.done', 'each', 'required'],
+            ['users.*.todo.*.done', 'each', 'bool'],
+        ]);
+
+        $this->assertFalse($v->isOk());
+        $this->assertCount(1, $v->getErrors());
+        $this->assertTrue($v->inError('users.*.todo.*.done'));
     }
 
     public function testMultiLevelData(): void

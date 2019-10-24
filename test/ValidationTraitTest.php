@@ -4,6 +4,7 @@ namespace Inhere\ValidateTest;
 
 use Inhere\Validate\Validation;
 use Inhere\Validate\ValidationTrait;
+use Inhere\Validate\ArrayValueNotExists;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 
@@ -71,6 +72,8 @@ class ValidationTraitTest extends TestCase
             ['attr' => ['wid' => 1]],
             ['attr' => ['wid' => 2]],
             ['attr' => ['wid' => 3]],
+            ['attr' => ['name' => 'abc']],
+            ['prop' => ['wid' => 4]],
         ]);
 
         $val = $v->GetByPath('0.attr');
@@ -79,11 +82,12 @@ class ValidationTraitTest extends TestCase
         $val = $v->getByPath('0.attr.wid');
         $this->assertSame(1, $val);
 
+        $notExists = new ArrayValueNotExists();
         $val = $v->getByPath('*.attr');
-        $this->assertSame([['wid' => 1], ['wid' => 2], ['wid' => 3]], $val);
+        $this->assertEquals([['wid' => 1], ['wid' => 2], ['wid' => 3], ['name' => 'abc'], $notExists], $val);
 
         $val = $v->getByPath('*.attr.wid');
-        $this->assertSame([1, 2, 3], $val);
+        $this->assertEquals([1, 2, 3, $notExists, $notExists], $val);
     }
 
     public function testMultidimensionalArray(): void

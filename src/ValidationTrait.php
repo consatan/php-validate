@@ -582,8 +582,8 @@ trait ValidationTrait
 
         $result = [];
         foreach ($recently as $item) {
-            if (is_array($item) && isset($item[$field])) {
-                $result[] = $item[$field];
+            if (is_array($item)) {
+                $result[] = isset($item[$field]) ? $item[$field] : new ArrayValueNotExists();
             }
         }
 
@@ -603,7 +603,11 @@ trait ValidationTrait
 
         $children = [];
         foreach ($result as $item) {
-            $children[] = Helper::getValueOfArray($item, $newPath, $default);
+            if ($item instanceof ArrayValueNotExists) {
+                $children[] = new ArrayValueNotExists();
+            } else {
+                $children[] = Helper::getValueOfArray($item, $newPath, new ArrayValueNotExists());
+            }
         }
 
         return $children;
