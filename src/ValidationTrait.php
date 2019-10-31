@@ -597,9 +597,14 @@ trait ValidationTrait
         if (false !== strpos($newPath, '*')) {
             $data = [];
             foreach ($result as $item) {
-                $data = array_merge($data, $item);
+                if ($item instanceof ArrayValueNotExists) {
+                    $data[] = $notExists;
+                } else {
+                    $data = array_merge($data, $item);
+                }
             }
-            return $this->getByPath($newPath, $default, $data);
+
+            return $newPath !== '*' ? $this->getByPath($newPath, $default, $data) : $data;
         }
 
         $children = [];

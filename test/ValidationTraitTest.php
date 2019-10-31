@@ -109,6 +109,7 @@ class ValidationTraitTest extends TestCase
                                     'manage' => true,
                                 ],
                             ],
+                            'index_array' => [1, 2, 3],
                         ],
                         [
                             'name' => '222',
@@ -122,6 +123,7 @@ class ValidationTraitTest extends TestCase
                                     'manage' => false,
                                 ],
                             ],
+                            'index_array' => [4, 5, 6],
                         ],
                         [
                             'name' => '333',
@@ -170,6 +172,13 @@ class ValidationTraitTest extends TestCase
 
         $val = $v->getByPath('companies.*.departments.*.employees.*.name');
         $this->assertSame(['aaa', 'bbb', 'ccc', 'ddd', 'eee', 'fff', 'xxx', 'yyy'], $val);
+
+        $notExists = new ArrayValueNotExists();
+        $val = $v->getByPath('companies.*.departments.*.index_array');
+        $this->assertEquals([[1, 2, 3], [4, 5, 6], $notExists, $notExists], $val);
+
+        $val = $v->getByPath('companies.*.departments.*.index_array.*');
+        $this->assertEquals([1, 2, 3, 4, 5, 6, $notExists, $notExists], $val);
     }
 
     public function testBeforeAndAfter(): void
