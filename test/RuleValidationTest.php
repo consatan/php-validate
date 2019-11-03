@@ -546,16 +546,16 @@ class RuleValidationTest extends TestCase
                 ['id' => 89, 'name' => 'john'],
             ],
         ], [
-            ['tags', 'each', 'number'],
-            ['goods.*', 'each', 'string', 'min' => 4],
-            ['users.*.id', 'each', 'required'],
-            ['users.*.id', 'each', 'number', 'min' => 34],
-            ['users.*.name', 'each', 'string', 'min' => 5],
+            ['tags.*', 'number'],
+            ['goods.*', 'string', 'min' => 4],
+            ['users.*.id', 'required'],
+            ['users.*.id', 'number', 'min' => 34],
+            ['users.*.name', 'string', 'min' => 5],
         ]);
 
         $this->assertFalse($v->isOk());
         $this->assertCount(1, $v->getErrors());
-        $this->assertTrue($v->inError('users.*.name'));
+        $this->assertTrue($v->inError('users.0.name'));
 
         $v = RuleValidation::check([
             'users' => [
@@ -563,13 +563,13 @@ class RuleValidationTest extends TestCase
                 ['name' => 'john'],
             ],
         ], [
-            ['users.*.id', 'each', 'required'],
-            ['users.*.id', 'each', 'number', 'min' => 34],
+            ['users.*.id', 'required'],
+            ['users.*.id', 'number', 'min' => 34],
         ]);
 
         $this->assertFalse($v->isOk());
         $this->assertCount(1, $v->getErrors());
-        $this->assertTrue($v->inError('users.*.id'));
+        $this->assertTrue($v->inError('users.1.id'));
     }
 
     public function testMultiLevelData(): void
@@ -584,7 +584,7 @@ class RuleValidationTest extends TestCase
                 ]
             ]
         ], [
-            ['prod.*.attr', 'each', 'required'],
+            ['prod.*.attr', 'required'],
             // ['prod.*.attr.wid', 'each', 'required'],
             ['prod.0.attr.wid', 'number'],
         ]);
@@ -641,7 +641,7 @@ class RuleValidationTest extends TestCase
     {
         $rule = [
             ['goods_id', 'list', 'msg' => '商品id数组为空或不合法'],
-            ['goods_id.*', 'each', 'integer', 'msg' => '商品分类id必须是一串数字']
+            ['goods_id.*', 'integer', 'msg' => '商品分类id必须是一串数字']
         ];
 
         $v = Validation::check([
@@ -684,8 +684,6 @@ class RuleValidationTest extends TestCase
     {
         $rs = [
             ['users.*.id', 'required'],
-            ['users.*.id', 'each', 'required'],
-            // ['users.*.id', 'each', 'string']
         ];
 
         $v = RV::check([

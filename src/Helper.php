@@ -379,4 +379,79 @@ class Helper
 
         return false;
     }
+
+    /**
+     * 将 array path 中的 * 替换为实际索引下标
+     *
+     * @param string $field
+     * @param array  $array
+     * @return array
+     */
+    public static function expandWildcardKeys(string $field, array $array): array
+    {
+        $fields = [];
+        $field = trim($field);
+
+        foreach (explode('*', $field) as $i => $path) {
+            if ('' === $path) {
+                if (0 === $i) {
+                    // *.x
+                    foreach ($array as $k => $v) {
+                        if (is_array($v)) {
+                            $fields[] = (string)$k;
+                        }
+                    }
+                }
+
+                continue;
+            }
+
+            $startWith = $path[0] === '.';
+            $endWith = substr($path, -1) === '.';
+
+            if ($startWith && $endWith) {
+                $tmpFields = [];
+                $path = substr($path, 0, -1);
+                foreach ($fields as $val) {
+                    $val .= $path;
+                    $nokey = false;
+                    $tmp =& $array;
+                    foreach (explode('.', $val) as $key) {
+                        if (!array_key_exists($key, $tmp)) {
+                            $nokey = true;
+                            break;
+                        }
+
+                        $tmp =& $tmp[$key];
+                    }
+
+                    if ($nokey) {
+                        $tmpFields[] = "{$val}.?";
+                    } else {
+                        foreach ($tmp as $k => $v) {
+                            $tmpFields[] = "{$val}.{$k}";
+                        }
+                    }
+                    unset($tmp);
+                }
+
+                $fields = $tmpFields;
+            } elseif ($startWith) {
+                foreach ($fields as &$val) {
+                    $val .= $path;
+                }
+                unset($val);
+            } elseif ($endWith) {
+                $isList = "{$path}*" === $field;
+                $path = substr($path, 0, -1);
+                foreach ($array[$path] as $k => $v) {
+                    if ($isList || is_array($v)) {
+                        $fields[] = "{$path}.{$k}";
+                    }
+                }
+            }
+        }
+
+        return $fields;
+    }
 }
