@@ -54,17 +54,26 @@ class RuleValidationTest extends TestCase
     {
         $data = [
             'userId' => 0,
-            'tagId'  => 10,
+            'tagId'  => '10',
             'goods'  => [
-                'apple' => 34,
+                'apple' => '34',
                 'pear'  => 50,
             ],
         ];
 
         $v = RuleValidation::makeAndValidate($data, [
-            ['userId, tagId, goods.apple', 'required']
+            ['userId, tagId, goods.apple', 'required'],
+            ['tagId, goods.apple', 'int', 'min' => 10, 'filter' => 'int'],
         ]);
 
+        $this->assertSame([
+            'userId' => 0,
+            'tagId' => 10,
+            'goods' => [
+                'apple' => 34,
+                'pear' => 50,
+            ]
+        ], $v->getSafeData());
         $this->assertCount(0, $v->getErrors());
     }
 

@@ -10,6 +10,7 @@ namespace Inhere\Validate;
 
 use Closure;
 use Generator;
+use Inhere\Validate\Helper;
 use Inhere\Validate\Filter\FilteringTrait;
 use Inhere\Validate\Filter\Filters;
 use Inhere\Validate\Traits\ErrorMessageTrait;
@@ -273,10 +274,11 @@ trait ValidationTrait
             $value = $this->getByPath($field, $defValue);
 
             // Field value filtering(有通配符`*`的字段, 不应用过滤器)
-            if ($filters && null !== $value && !strpos($field, '.*')) {
+            if ($filters && $defValue !== $value && !strpos($field, '.*')) {
                 $value = $this->valueFiltering($value, $filters);
                 // save
-                $this->data[$field] = $value;
+                // 上面的 getByPath 和 $defValue !== $value 条件保证了 $field 路由肯定存在于 array 里
+                Helper::setArrayValue($this->data, $field, $value);
             }
 
             // Field name validate

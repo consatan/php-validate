@@ -239,6 +239,31 @@ class Helper
         return $found ? $array : $default;
     }
 
+    public static function setArrayValue(array &$array, $key, $value)
+    {
+        if (null === $key || !is_string($key) || !strpos($key, '.')) {
+            return false;
+        }
+
+        if (array_key_exists($key, $array)) {
+            $array[$key] = $value;
+            return true;
+        }
+
+        $temp =& $array;
+        foreach (explode('.', $key) as $segment) {
+            if (is_array($temp) && array_key_exists($segment, $temp)) {
+                $temp =& $temp[$segment];
+            } else {
+                return false;
+            }
+        }
+
+        $temp = $value;
+        unset($temp);
+        return true;
+    }
+
     /**
      * @param callable|mixed $cb
      * @param array          $args
