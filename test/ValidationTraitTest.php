@@ -195,7 +195,7 @@ class ValidationTraitTest extends TestCase
         });
 
         $v->onAfterValidate(function (Validation $v) {
-            $this->assertSame('INHERE', $v->getRaw('name'));
+            $this->assertSame('inhere', $v->getRaw('name'));
             $this->assertSame('INHERE', $v->getSafe('name'));
         });
 

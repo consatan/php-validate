@@ -10,6 +10,7 @@ namespace Inhere\Validate;
 
 use Closure;
 use Generator;
+use Inhere\Validate\Helper;
 use Inhere\Validate\Filter\FilteringTrait;
 use Inhere\Validate\Filter\Filters;
 use Inhere\Validate\Traits\ErrorMessageTrait;
@@ -265,46 +266,55 @@ trait ValidationTrait
         // The rest are validator parameters. Some validators require parameters. e.g. size()
         $args = $rule;
 
-        foreach ($fields as $field) {
-            if (!$field || ($onlyChecked && !in_array($field, $onlyChecked, true))) {
+        foreach ($fields as $_field) {
+            if (!$_field || ($onlyChecked && !in_array($_field, $onlyChecked, true))) {
                 continue;
             }
 
-            $value = $this->getByPath($field, $defValue);
-
-            // Field value filtering(有通配符`*`的字段, 不应用过滤器)
-            if ($filters && null !== $value && !strpos($field, '.*')) {
-                $value = $this->valueFiltering($value, $filters);
-                // save
-                $this->data[$field] = $value;
+            if (false === strpos($_field, '*')) {
+                $expandFields = [$_field];
+            } else {
+                $expandFields = Helper::expandWildcardKeys($_field, $this->data);
             }
 
-            // Field name validate
-            if (is_string($validator)) {
-                if ($validator === 'safe') {
-                    $this->setSafe($field, $value);
-                    continue;
+            foreach ($expandFields as $field) {
+                $value = $this->getByPath($field, $defValue);
+
+                // Field value filtering(有通配符`*`的字段, 不应用过滤器)
+                if ($filters && $defValue !== $value && !strpos($field, '.*')) {
+                    $value = $this->valueFiltering($value, $filters);
+                    // save
+                    // 上面的 getByPath 和 $defValue !== $value 条件保证了 $field 路由肯定存在于 array 里
+                    Helper::setArrayValue($this->data, $field, $value);
                 }
 
-                // required*系列字段检查 || 文件资源检查
-                if (self::isCheckRequired($validator) || self::isCheckFile($validator)) {
-                    $result = $this->fieldValidate($field, $value, $validator, $args, $defMsg);
-
-                    if (false === $result && $this->isStopOnError()) {
-                        break;
+                // Field name validate
+                if (is_string($validator)) {
+                    if ($validator === 'safe') {
+                        $this->setSafe($field, $value);
+                        continue;
                     }
+
+                    // required*系列字段检查 || 文件资源检查
+                    if (self::isCheckRequired($validator) || self::isCheckFile($validator)) {
+                        $result = $this->fieldValidate($field, $value, $validator, $args, $defMsg);
+
+                        if (false === $result && $this->isStopOnError()) {
+                            break;
+                        }
+                        continue;
+                    }
+                }
+
+                // skip On Empty && The value is empty
+                if ($skipOnEmpty && Helper::call($isEmpty, $value)) {
                     continue;
                 }
-            }
 
-            // skip On Empty && The value is empty
-            if ($skipOnEmpty && Helper::call($isEmpty, $value)) {
-                continue;
-            }
-
-            // Field value verification check
-            if (!$this->valueValidate($field, $value, $validator, $args, $defMsg) && $this->isStopOnError()) {
-                break;
+                // Field value verification check
+                if (!$this->valueValidate($field, $value, $validator, $args, $defMsg) && $this->isStopOnError()) {
+                    break;
+                }
             }
         }
     }
