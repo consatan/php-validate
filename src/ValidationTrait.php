@@ -250,10 +250,6 @@ trait ValidationTrait
 
         // Preconditions for verification -- If do not meet the conditions, skip this rule
         $when = $rule['when'] ?? null;
-        if ($when && ($when instanceof Closure) && $when($this->data, $this) !== true) {
-            return;
-        }
-
         // Whether to skip when empty(When not required). ref yii2
         $skipOnEmpty = $rule['skipOnEmpty'] ?? $this->_skipOnEmpty;
         $filters     = $rule['filter'] ?? null;  // filter
@@ -279,6 +275,10 @@ trait ValidationTrait
 
             foreach ($expandFields as $field) {
                 $value = $this->getByPath($field, $defValue);
+
+                if ($when && ($when instanceof Closure) && $when($this->data, $this, $value) !== true) {
+                    continue;
+                }
 
                 // Field value filtering(有通配符`*`的字段, 不应用过滤器)
                 if ($filters && $defValue !== $value && !strpos($field, '.*')) {
