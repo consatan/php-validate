@@ -276,7 +276,7 @@ trait ValidationTrait
             foreach ($expandFields as $field) {
                 $value = $this->getByPath($field, $defValue);
 
-                if ($when && ($when instanceof Closure) && $when($this->data, $this, $value) !== true) {
+                if ($when && ($when instanceof Closure) && $when($this->data, $this, $field) !== true) {
                     continue;
                 }
 
