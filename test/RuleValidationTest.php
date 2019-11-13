@@ -337,6 +337,54 @@ class RuleValidationTest extends TestCase
         $this->assertEquals($v->getSafe('tagId'), null);
     }
 
+    public function testWhenOnWildcardField(): void
+    {
+        $v = RuleValidation::make([
+            'package' => [
+                [
+                    'config' => [
+                        ['type' => '1', 'day' => '1'],
+                        ['type' => '0'],
+                        ['type' => '1', 'day' => '1'],
+                    ]
+                ],
+                [
+                    'config' => [
+                        ['type' => '0'],
+                        ['type' => '1', 'day' => '1'],
+                        ['type' => '0'],
+                    ]
+                ],
+            ],
+        ], [
+            ['package.*.config.*.type', 'required', 'filter' => 'bool'],
+            ['package.*.config.*.day', 'required', 'filter' => 'int', 'when' => function ($data, $self, $field) {
+                list($_, $i, $_, $j, $_) = explode('.', $field);
+                return (bool)$data['package'][$i]['config'][$j]['type'];
+            }],
+        ])->validate();
+
+        $this->assertTrue($v->isOk());
+        $this->assertSame($v->getSafeData(), [
+            'package' => [
+                [
+                    'config' => [
+                        ['type' => true, 'day' => 1],
+                        ['type' => false],
+                        ['type' => true, 'day' => 1],
+                    ]
+                ],
+                [
+                    'config' => [
+                        ['type' => false],
+                        ['type' => true, 'day' => 1],
+                        ['type' => false],
+                    ]
+                ],
+            ],
+        ]);
+    }
+
     public function testValidateRegex(): void
     {
         $v = RuleValidation::check([
