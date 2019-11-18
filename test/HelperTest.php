@@ -89,4 +89,60 @@ class HelperTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         Helper::call('oo-invalid');
     }
+
+    public function testExpandWildcardKeys()
+    {
+        $this->assertSame(Helper::expandWildcardKeys('product.*.name', [
+            'product' => [
+                ['name' => 'foo'],
+                ['name' => 'bar'],
+            ],
+        ]), ['product.0.name', 'product.1.name']);
+
+        $this->assertSame(Helper::expandWildcardKeys('product.*.name', ['product' => []]), ['product.?.name']);
+
+
+        $this->assertSame(Helper::expandWildcardKeys('product.zones.*.name', [
+            'product' => [
+                'zones' => [
+                    ['name' => 'foo'],
+                    ['name' => 'bar'],
+                ],
+            ]
+        ]), ['product.zones.0.name', 'product.zones.1.name']);
+
+        $this->assertSame(
+            Helper::expandWildcardKeys('product.zones.*.name', ['product' => ['zones' => []]]),
+            ['product.zones.?.name']
+        );
+
+        $this->assertSame(Helper::expandWildcardKeys('*.zones.*.name', [
+            ['zones' => [
+                ['name' => 'foo']
+            ]],
+            ['zones' => [
+                ['name' => 'bar']
+            ]],
+        ]), ['0.zones.0.name', '1.zones.0.name']);
+
+        $this->assertSame(Helper::expandWildcardKeys('*.zones.*.name', []), ['?.zones.?.name']);
+
+        $this->assertSame(Helper::expandWildcardKeys('zones.*.name', [
+            'zones' => [
+                ['name' => 'foo'],
+                ['name' => 'bar'],
+                ['id' => 361100],
+            ]
+        ]), ['zones.0.name', 'zones.1.name', 'zones.2.name']);
+
+        $this->assertSame(Helper::expandWildcardKeys('zones.*.name.*.cn', [
+            'zones' => [
+                ['name' => [
+                    ['cn' => 'foo'],
+                    ['cn' => 'bar'],
+                ]],
+                ['id' => 361100],
+            ]
+        ]), ['zones.0.name.0.cn', 'zones.0.name.1.cn', 'zones.1.name.?.cn']);
+    }
 }

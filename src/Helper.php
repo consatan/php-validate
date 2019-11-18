@@ -401,6 +401,10 @@ class Helper
                             $fields[] = (string)$k;
                         }
                     }
+
+                    if (empty($fields)) {
+                        return [strtr($field, '*', '?')];
+                    }
                 }
 
                 continue;
@@ -444,7 +448,21 @@ class Helper
             } elseif ($endWith) {
                 $isList = "{$path}*" === $field;
                 $path = substr($path, 0, -1);
-                foreach ($array[$path] as $k => $v) {
+                $tmp = $array;
+                foreach (explode('.', $path) as $key) {
+                    if (array_key_exists($key, $tmp)) {
+                        $tmp = $tmp[$key];
+                    } else {
+                        $tmp = [];
+                        break;
+                    }
+                }
+
+                if (empty($tmp)) {
+                    return [strtr($field, '*', '?')];
+                }
+
+                foreach ($tmp as $k => $v) {
                     if ($isList || is_array($v)) {
                         $fields[] = "{$path}.{$k}";
                     }
