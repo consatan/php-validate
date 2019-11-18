@@ -291,7 +291,7 @@ trait ValidationTrait
                 // Field name validate
                 if (is_string($validator)) {
                     if ($validator === 'safe') {
-                        $this->setSafe($field, $value);
+                        $this->collectSafeValue($field, $value);
                         continue;
                     }
 
@@ -436,14 +436,19 @@ trait ValidationTrait
      */
     protected function collectSafeValue(string $field, $value): void
     {
-        // 进行的是子级属性检查 eg: 'goods.apple'
-        if ($pos = strpos($field, '.')) {
-            $field = (string)substr($field, 0, $pos);
-            $value = $this->getRaw($field, []);
+        if (strpos($field, '.')) {
+            $arr = [];
+            $data =& $arr;
+            $field = explode('.', $field);
+            for ($i = 0, $l = count($field) - 2; $i <= $l; $i++) {
+                $data[$field[$i]] = [];
+                $data =& $data[$field[$i]];
+            }
+            $data[$field[$i]] = $value;
+            $this->_safeData = array_replace_recursive($this->_safeData, $arr);
+        } else {
+            $this->_safeData[$field] = $value;
         }
-
-        // set
-        $this->_safeData[$field] = $value;
     }
 
     /**

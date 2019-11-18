@@ -71,7 +71,6 @@ class RuleValidationTest extends TestCase
             'tagId' => 10,
             'goods' => [
                 'apple' => 34,
-                'pear' => 50,
             ]
         ], $v->getSafeData());
         $this->assertCount(0, $v->getErrors());
@@ -780,5 +779,45 @@ class RuleValidationTest extends TestCase
                 ['id' => 2, 'name' => 'n1'],
             ],
         ], $rs);
+    }
+
+    public function testSafe()
+    {
+        $data = [
+            'users' => [
+                ['name' => 'foo', 'id' => '1'],
+                ['name' => 'bar', 'id' => 2],
+            ],
+            'id' => '123',
+            'class' => [
+                'name' => 'foobar',
+                'level' => 3,
+            ],
+        ];
+
+        $v = RV::check($data, [['users.*.name', 'safe']]);
+
+        $this->assertTrue($v->isOK());
+        $this->assertSame(['users' => [
+            ['name' => 'foo'],
+            ['name' => 'bar'],
+        ]], $v->getSafeData());
+
+        $v = RV::check($data, [
+            ['users.*.name,class.name', 'safe', 'filter' => 'trim'],
+            ['id, users.*.id', 'safe', 'filter' => 'int'],
+        ]);
+
+        $this->assertTrue($v->isOK());
+        $this->assertSame([
+            'users' => [
+                ['name' => 'foo', 'id' => 1],
+                ['name' => 'bar', 'id' => 2],
+            ],
+            'class' => [
+                'name' => 'foobar'
+            ],
+            'id' => 123,
+        ], $v->getSafeData());
     }
 }
