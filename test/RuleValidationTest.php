@@ -602,7 +602,7 @@ class RuleValidationTest extends TestCase
 
         $this->assertFalse($v->isOk());
         $this->assertCount(1, $v->getErrors());
-        $this->assertTrue($v->inError('users.0.name'));
+        $this->assertTrue($v->inError('users.*.name'));
 
         $v = RuleValidation::check([
             'users' => [
@@ -616,7 +616,7 @@ class RuleValidationTest extends TestCase
 
         $this->assertFalse($v->isOk());
         $this->assertCount(1, $v->getErrors());
-        $this->assertTrue($v->inError('users.1.id'));
+        $this->assertTrue($v->inError('users.*.id'));
 
         $v = RuleValidation::check([
             'users' => [
@@ -636,7 +636,7 @@ class RuleValidationTest extends TestCase
 
         $this->assertFalse($v->isOk());
         $this->assertCount(1, $v->getErrors());
-        $this->assertTrue($v->inError('users.1.todo.1.done'));
+        $this->assertTrue($v->inError('users.*.todo.*.done'));
     }
 
     public function testMultiLevelData(): void
@@ -819,5 +819,42 @@ class RuleValidationTest extends TestCase
             ],
             'id' => 123,
         ], $v->getSafeData());
+    }
+
+    public function testMeesageInWildcardField()
+    {
+        $data = [
+            'users' => [
+                ['name' => 'foo'],
+                ['name' => 123],
+            ],
+            'class' => [
+                ['id' => 1, 'name' => 'A', 'students' => [
+                    ['name' => 'foo', 'id' => 123],
+                    ['name' => 'bar', 'id' => 'A123'],
+                ]],
+                ['id' => 2, 'name' => 'B', 'students' => [
+                    ['name' => 'foo', 'id' => 'B123'],
+                    ['name' => 'bar', 'id' => 123],
+                ]],
+            ],
+        ];
+
+        $v = RV::make($data, [
+            ['users.*.name', 'string', 'msg' => '{attr} must be a type of string'],
+            ['class.*.students.*.id', 'string', 'msg' => '{attr} must be a type of string'],
+        ], [
+            'users.*.name' => 'user name',
+            'class.*.students.*.id' => 'student ID',
+        ]);
+        $v->setStopOnError(false);
+        $v->validate();
+
+        $this->assertFalse($v->isOK());
+        $errors = $v->getErrors();
+        $this->assertEquals(3, count($errors));
+        $this->assertEquals('user name must be a type of string', $errors[0]['msg']);
+        $this->assertEquals('student ID must be a type of string', $errors[1]['msg']);
+        $this->assertEquals('student ID must be a type of string', $errors[2]['msg']);
     }
 }

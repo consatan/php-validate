@@ -297,7 +297,7 @@ trait ValidationTrait
 
                     // required*系列字段检查 || 文件资源检查
                     if (self::isCheckRequired($validator) || self::isCheckFile($validator)) {
-                        $result = $this->fieldValidate($field, $value, $validator, $args, $defMsg);
+                        $result = $this->fieldValidate($field, $value, $validator, $args, $defMsg, $_field);
 
                         if (false === $result && $this->isStopOnError()) {
                             break;
@@ -312,7 +312,7 @@ trait ValidationTrait
                 }
 
                 // Field value verification check
-                if (!$this->valueValidate($field, $value, $validator, $args, $defMsg) && $this->isStopOnError()) {
+                if (!$this->valueValidate($field, $value, $validator, $args, $defMsg, $_field) && $this->isStopOnError()) {
                     break;
                 }
             }
@@ -334,8 +334,14 @@ trait ValidationTrait
      * - NULL  skip check(for `required*`)
      * @throws InvalidArgumentException
      */
-    protected function fieldValidate(string $field, $value, string $validator, array $args, $defMsg): ?bool
-    {
+    protected function fieldValidate(
+        string $field,
+        $value,
+        string $validator,
+        array $args,
+        $defMsg,
+        string $originField = ''
+    ): ?bool {
         // required check
         if ($validator === 'required') {
             $passed = $this->required($field, $value);
@@ -359,7 +365,10 @@ trait ValidationTrait
         }
 
         if ($passed === false) {
-            $this->addError($field, $this->getMessage($validator, $field, $args, $defMsg));
+            $this->addError(
+                $originField ?: $field,
+                $this->getMessage($validator, $originField ?: $field, $args, $defMsg)
+            );
         }
 
         return $passed;
@@ -377,11 +386,20 @@ trait ValidationTrait
      * @return bool
      * @throws InvalidArgumentException
      */
-    protected function valueValidate(string $field, $value, $validator, array $args, $defMsg): bool
-    {
+    protected function valueValidate(
+        string $field,
+        $value,
+        $validator,
+        array $args,
+        $defMsg,
+        string $originField = ''
+    ): bool {
         // if field don't exists.
         if (null === $value) {
-            $this->addError($field, $this->getMessage($validator, $field, $args, $defMsg));
+            $this->addError(
+                $originField ?: $field,
+                $this->getMessage($validator, $originField ?: $field, $args, $defMsg)
+            );
             return false;
         }
 
@@ -424,7 +442,10 @@ trait ValidationTrait
             return true;
         }
 
-        $this->addError($field, $this->getMessage($validator, $field, $rawArgs, $defMsg));
+        $this->addError(
+            $originField ?: $field,
+            $this->getMessage($validator, $originField ?: $field, $rawArgs, $defMsg)
+        );
         return false;
     }
 
