@@ -458,6 +458,10 @@ trait ValidationTrait
     protected function collectSafeValue(string $field, $value): void
     {
         if (strpos($field, '.')) {
+            if (false !== strpos($field, '?')) {
+                return;
+            }
+
             $arr = [];
             $data =& $arr;
             $field = explode('.', $field);

@@ -857,4 +857,37 @@ class RuleValidationTest extends TestCase
         $this->assertEquals('student ID must be a type of string', $errors[1]['msg']);
         $this->assertEquals('student ID must be a type of string', $errors[2]['msg']);
     }
+
+    public function testEmptyArray()
+    {
+        $rules = [
+            ['id', 'required', 'filter' => 'int'],
+            ['products', 'array', 'default' => [], 'isEmpty' => function ($data) {
+                return !(is_array($data) && 0 === count($data));
+            }],
+            ['products.*.id', 'safe', 'filter' => 'int'],
+            ['products.*.name', 'safe', 'filter' => 'trim'],
+        ];
+
+        $v = RV::make(['id' => 1, 'products' => []], $rules);
+        $v->validate();
+
+        $this->assertTrue($v->isOk());
+        $this->assertSame($v->getSafeData(), ['id' => 1, 'products' => []]);
+
+        $v = RV::make([
+            'id' => 2,
+            'products' => [
+                ['id' => 1, 'name' => 'abc'],
+                ['id' => 2, 'name' => 'xyz'],
+            ],
+        ], $rules);
+        $v->validate();
+
+        $this->assertTrue($v->isOk());
+        $this->assertSame($v->getSafeData(), ['id' => 2, 'products' => [
+            ['id' => 1, 'name' => 'abc'],
+            ['id' => 2, 'name' => 'xyz'],
+        ]]);
+    }
 }
