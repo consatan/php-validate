@@ -890,4 +890,28 @@ class RuleValidationTest extends TestCase
             ['id' => 2, 'name' => 'xyz'],
         ]]);
     }
+
+    public function testDefaultObject()
+    {
+        $rules = [['data', function ($data) {
+            return is_array($data) || $data == (object)[];
+        }, 'default' => (object)[], 'isEmpty' => function ($data) {
+            return !($data == (object)[] || (is_array($data) && 0 === count($data)));
+        }, 'filter' => function ($data) {
+            return is_array($data) && 0 === count($data) ? (object)[] : $data;
+        }], ['data.id', 'int', 'min' => 0, 'filter' => 'int', 'when' => function ($data) {
+            return !empty($data['data']);
+        }], ['data.name', 'string', 'min' => 3, 'filter' => 'string', 'when' => function ($data) {
+            return !empty($data['data']);
+        }]];
+
+        $v = RV::check(['data' => []], $rules);
+
+        $this->assertTrue($v->isOk());
+        $this->assertSame(json_encode($v->getSafeData()), '{"data":{}}');
+
+        $v = RV::check(['data' => ['id' => '1', 'name' => 'chopin']], $rules);
+        $this->assertTrue($v->isOk());
+        $this->assertSame($v->getSafeData(), ['data' => ['id' => 1, 'name' => 'chopin']]);
+    }
 }

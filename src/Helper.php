@@ -241,13 +241,17 @@ class Helper
 
     public static function setArrayValue(array &$array, $key, $value)
     {
-        if (null === $key || !is_string($key) || !strpos($key, '.')) {
+        if (null === $key || !is_string($key)) {
             return false;
         }
 
         if (array_key_exists($key, $array)) {
             $array[$key] = $value;
             return true;
+        }
+
+        if (!strpos($key, '.')) {
+            return false;
         }
 
         $temp =& $array;
